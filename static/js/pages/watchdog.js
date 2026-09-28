@@ -1,5 +1,5 @@
 import { $, api, btn, esc, fieldRow, localTime, pageGuard, readForm } from "../core.js";
-import { t } from "../i18n.js";
+import { t } from "../text.js";
 import { state } from "../state.js";
 
 /* ---- watchdog ---- */

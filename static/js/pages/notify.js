@@ -1,5 +1,5 @@
 import { $, api, pageGuard, btn, closeDlg, esc, fieldRow, localTime, openDlg, readForm } from "../core.js";
-import { t } from "../i18n.js";
+import { t } from "../text.js";
 
 /* ---- notifications ---- */
 export const NOTIFY_TYPES={

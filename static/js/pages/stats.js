@@ -1,5 +1,5 @@
 import { $, api, pageGuard, esc } from "../core.js";
-import { t } from "../i18n.js";
+import { t } from "../text.js";
 import { trafficSpark } from "../sparkline.js";
 import { state } from "../state.js";
 

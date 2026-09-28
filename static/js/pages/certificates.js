@@ -1,6 +1,6 @@
 import { $, api, btn, closeDlg, esc, fieldRow, list, lists, localTime, openDlg, readForm, showText } from "../core.js";
 import { E, renderEntity } from "../entities.js";
-import { t, tn } from "../i18n.js";
+import { t, tn } from "../text.js";
 import { refreshStatus, route } from "../shell.js";
 import { state } from "../state.js";
 

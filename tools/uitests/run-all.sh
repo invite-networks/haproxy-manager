@@ -2,9 +2,7 @@
 # Every front-end check, in the order that fails fastest.
 set -e
 cd "$(dirname "$0")/../.."
-for t in undefined-names module-graph navigate routing pages certificates-banner managed-objects dialogs recipes table-sorting table-sorting-dom account-gear webui-blurb admin-sync overwrite config-diff update-peers sparkline stats-refresh theme access mobile history localtime login-2fa maintenance oauth ratelimit wizard-sections beta-channel i18n; do
+for t in undefined-names module-graph navigate routing pages certificates-banner managed-objects dialogs recipes table-sorting table-sorting-dom account-gear webui-blurb admin-sync overwrite config-diff update-peers sparkline stats-refresh theme access mobile history localtime login-2fa maintenance oauth ratelimit wizard-sections beta-channel; do
     printf '\n== %s ==\n' "$t"
     node "tools/uitests/$t.mjs"
 done
-printf '\n== i18n-check ==\n'
-node tools/i18n-check.mjs

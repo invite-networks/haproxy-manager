@@ -1,6 +1,6 @@
 /* Single sign-on: the OIDC provider services can send their visitors to. */
 import { $, api, btn, esc, fieldRow, readForm } from "../core.js";
-import { t } from "../i18n.js";
+import { t } from "../text.js";
 
 export async function renderSso(){
   const c=$("#content");c.innerHTML="";

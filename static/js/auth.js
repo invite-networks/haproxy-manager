@@ -1,6 +1,6 @@
 import { setUnauthorisedHandler } from "./core.js";
 import { $, api, btn, closeDlg, esc, fieldEl, fieldRow, openDlg } from "./core.js";
-import { t, tn } from "./i18n.js";
+import { t, tn } from "./text.js";
 import { boot } from "./shell.js";
 import { maybeSetupWizard } from "./pages/setup.js";
 import { state } from "./state.js";

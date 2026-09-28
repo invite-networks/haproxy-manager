@@ -1,5 +1,5 @@
 import { $, HEALTH_LABEL, api, btn, closeDlg, esc, fieldEl, fieldRow, list, openDlg, readForm, selectOption, showText } from "../core.js";
-import { t } from "../i18n.js";
+import { t } from "../text.js";
 import { refreshStatus, route } from "../shell.js";
 import { CERT_STATUS } from "../pages/certificates.js";
 import { state } from "../state.js";

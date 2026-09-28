@@ -1,5 +1,5 @@
 import { $, api, btn, closeDlg, esc, openDlg } from "../core.js";
-import { t } from "../i18n.js";
+import { t } from "../text.js";
 import { refreshStatus, route } from "../shell.js";
 import { certExpiryCell, certLastCell, certStat, certStatusCell } from "../pages/certificates.js";
 import { clusterCard } from "../pages/cluster.js";

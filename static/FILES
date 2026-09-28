@@ -7,17 +7,6 @@ index.html
 js/auth.js
 js/core.js
 js/entities.js
-js/i18n.js
-js/i18n/da.js
-js/i18n/de.js
-js/i18n/es.js
-js/i18n/fi.js
-js/i18n/fr.js
-js/i18n/it.js
-js/i18n/nb.js
-js/i18n/nl.js
-js/i18n/pt.js
-js/i18n/sv.js
 js/main.js
 js/pages/acme.js
 js/pages/backup.js
@@ -37,6 +26,7 @@ js/pages/webui.js
 js/shell.js
 js/sparkline.js
 js/state.js
+js/text.js
 js/theme.js
 logo.svg
 recipes/actual.json

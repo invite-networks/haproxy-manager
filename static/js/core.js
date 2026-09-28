@@ -1,5 +1,5 @@
 "use strict";
-import { t, tn } from "./i18n.js";
+import { t, tn } from "./text.js";
 import { state } from "./state.js";
 /* What to do when the server says the session is gone. auth.js registers
    showLogin here; importing it directly would make core and auth depend on
@@ -28,12 +28,6 @@ export async function api(path,method="GET",body){
   const r=await fetch("/api/"+path,{method,headers:{"Content-Type":"application/json"},
     body:body!==undefined?JSON.stringify(body):undefined});
   const data=await r.json().catch(()=>({}));
-  /* The server speaks English. The fixed phrases it answers with -- "no such
-     user", "the password is not correct" -- are in the dictionaries too, so
-     they reach the reader in their own language; a message assembled around a
-     value falls through as it was sent. */
-  if(data&&typeof data==="object"&&!Array.isArray(data))
-    ["error","note","message"].forEach(k=>{if(typeof data[k]==="string"&&data[k])data[k]=t(data[k]);});
   if(r.status===401&&!data.totp_required){onUnauthorised();throw new Error(data.error||t("Your session has expired -- sign in again."));}
   if(!r.ok){
     const e=new Error(data.error||("HTTP "+r.status));
@@ -85,8 +79,7 @@ export function localTime(iso){
          p(d.getHours())+":"+p(d.getMinutes())+":"+p(d.getSeconds());
 }
 
-/* health check kinds, shared by the wizard and the Health Monitors page --
-   English here, translated by whoever shows them */
+/* health check kinds, shared by the wizard and the Health Monitors page */
 export const HEALTH_LABEL={
   none:"none -- always considered up",
   tcp:"ping (TCP connect to the port)",
@@ -137,7 +130,7 @@ export function fieldRow(f,val){
     inp=document.createElement("select");inp.id="f_"+f.k;inp.dataset.field=f.k;
     /* options are plain strings, or {value,label} for things with an id. A
        plain string is a value HAProxy understands -- http, roundrobin -- and
-       is shown as it is; a label is words, and is translated. */
+       is shown as it is; a label is words. */
     const opts=(typeof f.o==="function"?f.o():f.o)||[];
     const valOf=o=>(o&&typeof o==="object")?o.value:o;
     opts.forEach(o=>{

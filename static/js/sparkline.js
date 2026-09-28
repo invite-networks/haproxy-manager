@@ -4,7 +4,7 @@
    library is not an option -- and for a line of numbers it would be a poor
    trade anyway. An SVG polyline says everything a sparkline needs to. */
 import { esc } from "./core.js";
-import { t } from "./i18n.js";
+import { t } from "./text.js";
 
 /* One line, sized to fit its own values, with errors drawn over requests. */
 export function sparkline(values, opts){

@@ -1,5 +1,5 @@
 import { $, api, download, esc } from "../core.js";
-import { t, tn } from "../i18n.js";
+import { t, tn } from "../text.js";
 import { state } from "../state.js";
 
 /* ---- logs ---- */

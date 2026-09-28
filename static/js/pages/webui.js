@@ -1,5 +1,5 @@
 import { $, api, btn, esc, fieldRow, readForm } from "../core.js";
-import { t, tn } from "../i18n.js";
+import { t, tn } from "../text.js";
 import { refreshStatus } from "../shell.js";
 import { CERT_MODE_LABEL } from "../pages/services.js";
 

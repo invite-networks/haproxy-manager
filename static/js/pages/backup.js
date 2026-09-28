@@ -1,5 +1,5 @@
 import { $, api, btn, download, esc, localTime, showText } from "../core.js";
-import { t } from "../i18n.js";
+import { t } from "../text.js";
 import { refreshStatus } from "../shell.js";
 
 /* ---- backup / export ---- */

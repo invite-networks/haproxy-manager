@@ -1,13 +1,12 @@
 import { $, HEALTH_LABEL, api, btn, closeDlg, esc, fieldRow, list, lists, nameOf, openDlg, readForm, showText } from "./core.js";
-import { t } from "./i18n.js";
+import { t } from "./text.js";
 import { refreshStatus, route } from "./shell.js";
 import { certificateNotices, certExpiryCell, certLastCell, certStatusCell, certUsesAlias, dnsApiByHook, dnsApiOptions, dnsCredentialHelp, issueCert, loadAcmeHealth, loadCertStatus, loadDnsApis, openCertWizard, showCertCnames, showCertLog } from "./pages/certificates.js";
 import { state } from "./state.js";
 
 /* ---- entity registry ---- */
 /* Field types: text number bool select ref refmulti textarea password.
-   Every label, hint, heading and intro is English here and translated where
-   it is drawn; `one` is the singular the editor's title needs. */
+   `one` is the singular the editor's title needs. */
 export const E={
  "haproxy/servers":{title:"Real Servers",one:"Real Server",add:"Add server",
   intro:"The upstream hosts traffic is forwarded to. Attach them to Backend Pools.",

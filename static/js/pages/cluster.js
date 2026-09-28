@@ -1,5 +1,5 @@
 import { $, api, btn, closeDlg, esc, fieldRow, openDlg, readForm, showText } from "../core.js";
-import { t } from "../i18n.js";
+import { t } from "../text.js";
 import { refreshStatus, route } from "../shell.js";
 import { state } from "../state.js";
 

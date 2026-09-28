@@ -5,7 +5,7 @@
  * refreshStatus(), and only main.js knows what all the pages are.
  */
 import { $, api, btn, esc, showText } from "./core.js";
-import { t } from "./i18n.js";
+import { t } from "./text.js";
 import { state } from "./state.js";
 
 let pages = {};        /* "p:" pages, keyed by name */
@@ -18,9 +18,8 @@ let render = {};       /* the generic renderers, and the entity definitions */
 export function setPages(map){ pages = map; }
 export function setRenderers(r){ render = r; }
 
-/* English here; the labels are translated where they are drawn. The group
-   labels double as the key the collapsed state is remembered under, which is
-   why that stays in English whatever the page speaks. */
+/* The group labels double as the key the collapsed state is remembered
+   under, so renaming one forgets whether it was collapsed. */
 export const NAV=[
  ["","Overview",null],
  ["p:services","Services"],
