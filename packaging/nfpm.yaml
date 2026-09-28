@@ -12,13 +12,13 @@ platform: linux
 version: ${VERSION}
 section: net
 priority: optional
-maintainer: avandeputte <avndptt@gmail.com>
+maintainer: INVITE Networks <support@invitenetworks.com>
 description: |
   HAProxy Cluster Manager -- a web UI for HAProxy, Keepalived and acme.sh.
   Publish services, obtain Let's Encrypt certificates and run a cluster on a
   shared virtual IP, with settings and certificates syncing between nodes.
-vendor: avandeputte
-homepage: https://github.com/avandeputte/haproxy-manager
+vendor: INVITE Networks
+homepage: https://github.com/invite-networks/haproxy-manager
 license: GPL-3.0
 
 # HAProxy and Keepalived are both required. A single node with no virtual IP

@@ -19,7 +19,7 @@ copying it across.
 sudo apt-get install -y ./haproxy-manager_1.95.0_all.deb
 
 # or the install script, on any Debian-based server
-curl -fsSL https://raw.githubusercontent.com/avandeputte/haproxy-manager/main/install.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/invite-networks/haproxy-manager/main/install.sh | sudo bash
 
 # or in Docker (linux/amd64 and linux/arm64)
 docker run -d --network host --cap-add NET_ADMIN --cap-add NET_BROADCAST --cap-add NET_RAW \
@@ -1130,7 +1130,7 @@ again. That makes the file safe to keep off the node.
 Debian-based distributions (Debian 12/13, Ubuntu 22.04/24.04), on **every** node:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/avandeputte/haproxy-manager/main/install.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/invite-networks/haproxy-manager/main/install.sh | sudo bash
 ```
 
 From a checkout, `sudo ./install.sh` installs those files instead of

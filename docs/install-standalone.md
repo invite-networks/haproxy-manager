@@ -37,17 +37,17 @@ unit called `haproxy-manager`.
 
 ### From a package (recommended)
 
-`.deb` and `.rpm` are attached to each [release](https://github.com/avandeputte/haproxy-manager/releases).
+`.deb` and `.rpm` are attached to each [release](https://github.com/invite-networks/haproxy-manager/releases).
 They carry acme.sh inside, so installing needs no network beyond your own
 package mirrors.
 
 ```bash
 # Debian / Ubuntu
-curl -fsSLO https://github.com/avandeputte/haproxy-manager/releases/latest/download/haproxy-manager_1.95.0_all.deb
+curl -fsSLO https://github.com/invite-networks/haproxy-manager/releases/latest/download/haproxy-manager_1.95.0_all.deb
 sudo apt-get install -y ./haproxy-manager_1.95.0_all.deb
 
 # Fedora
-curl -fsSLO https://github.com/avandeputte/haproxy-manager/releases/latest/download/haproxy-manager-1.95.0-1.noarch.rpm
+curl -fsSLO https://github.com/invite-networks/haproxy-manager/releases/latest/download/haproxy-manager-1.95.0-1.noarch.rpm
 sudo dnf install -y ./haproxy-manager-1.95.0-1.noarch.rpm
 
 # RHEL / Rocky / Alma -- python3-flask and python3-waitress live in EPEL
@@ -73,14 +73,14 @@ verified in CI by installing on that distribution and signing in.
 ### From the script
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/avandeputte/haproxy-manager/main/install.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/invite-networks/haproxy-manager/main/install.sh | sudo bash
 ```
 
 Or, if you would rather read it first — which is the sensible habit for anything
 piped into a root shell:
 
 ```bash
-curl -fsSL -o install.sh https://raw.githubusercontent.com/avandeputte/haproxy-manager/main/install.sh
+curl -fsSL -o install.sh https://raw.githubusercontent.com/invite-networks/haproxy-manager/main/install.sh
 less install.sh
 sudo bash install.sh
 ```
@@ -89,7 +89,7 @@ Running the script from a checkout installs *that* checkout instead of
 downloading, which is the offline path:
 
 ```bash
-git clone https://github.com/avandeputte/haproxy-manager
+git clone https://github.com/invite-networks/haproxy-manager
 cd haproxy-manager
 sudo ./install.sh
 ```
@@ -132,7 +132,7 @@ piping into `bash`:
 
 | Flag | Variable | Default |
 | --- | --- | --- |
-| `--repo <owner/name>` | `HAM_REPO` | `avandeputte/haproxy-manager` |
+| `--repo <owner/name>` | `HAM_REPO` | `invite-networks/haproxy-manager` |
 | `--ref <branch\|tag>` | `HAM_REF` | `main` |
 | `--port <port>` | `HAM_PORT` | `8080` |
 | `--listen <address>` | `HAM_LISTEN` | `0.0.0.0` |
@@ -151,7 +151,7 @@ piping into `bash`:
 Unattended, with your own credentials:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/avandeputte/haproxy-manager/main/install.sh \
+curl -fsSL https://raw.githubusercontent.com/invite-networks/haproxy-manager/main/install.sh \
   | sudo HAM_ADMIN_USER=alex HAM_ADMIN_PASSWORD='...' HAM_PORT=8080 bash -s -- --yes
 ```
 
@@ -190,7 +190,7 @@ installer in a transient systemd unit, so the service can restart under it.
 From the shell, which does the same thing:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/avandeputte/haproxy-manager/main/install.sh | sudo bash -s -- --update --yes
+curl -fsSL https://raw.githubusercontent.com/invite-networks/haproxy-manager/main/install.sh | sudo bash -s -- --update --yes
 ```
 
 A beta — a version published on the `beta` branch to try before its release —

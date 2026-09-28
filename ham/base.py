@@ -28,7 +28,7 @@ STATIC_DIR = ROOT_DIR / "static"
 STATS_SOCK = Path(os.environ.get("HAM_STATS_SOCK", "/run/haproxy/admin.sock"))
 
 # Where the daily update check looks, and what a one-click update installs.
-UPDATE_REPO = os.environ.get("HAM_REPO", "avandeputte/haproxy-manager")
+UPDATE_REPO = os.environ.get("HAM_REPO", "invite-networks/haproxy-manager")
 UPDATE_REF = os.environ.get("HAM_REF", "main")
 # Where betas live: the same VERSION file on another branch, read only by
 # nodes that have asked for betas under Settings > Updates.

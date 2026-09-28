@@ -2,7 +2,7 @@
 #
 # haproxy-manager installer for Debian-based distributions (Debian, Ubuntu, ...).
 #
-#   curl -fsSL https://raw.githubusercontent.com/avandeputte/haproxy-manager/main/install.sh | sudo bash
+#   curl -fsSL https://raw.githubusercontent.com/invite-networks/haproxy-manager/main/install.sh | sudo bash
 #
 # or from a checkout:
 #
@@ -13,7 +13,7 @@
 # preserves config.json, issued certificates and node-local settings.
 #
 # Options (flags, or the equivalent environment variables):
-#   --repo   <owner/name>  HAM_REPO      GitHub repository        (avandeputte/haproxy-manager)
+#   --repo   <owner/name>  HAM_REPO      GitHub repository        (invite-networks/haproxy-manager)
 #   --ref    <branch|tag>  HAM_REF       branch or tag to install (main)
 #   --port   <port>        HAM_PORT      UI/API port              (8080)
 #   --listen <address>     HAM_LISTEN    UI/API bind address      (0.0.0.0)
@@ -30,7 +30,7 @@
 set -euo pipefail
 umask 022
 
-REPO="${HAM_REPO:-avandeputte/haproxy-manager}"
+REPO="${HAM_REPO:-invite-networks/haproxy-manager}"
 REF="${HAM_REF:-main}"
 DEST="${HAM_DEST:-/opt/haproxy-manager}"
 DATA="${HAM_DATA_DIR:-/var/lib/haproxy-manager}"
@@ -74,11 +74,11 @@ usage() {
     cat <<'EOF'
 HAProxy Cluster Manager installer (Debian-based distributions)
 
-  curl -fsSL https://raw.githubusercontent.com/avandeputte/haproxy-manager/main/install.sh | sudo bash
+  curl -fsSL https://raw.githubusercontent.com/invite-networks/haproxy-manager/main/install.sh | sudo bash
   sudo ./install.sh
 
 Options (or the equivalent environment variable):
-  --repo    <owner/name>   HAM_REPO       GitHub repository        (avandeputte/haproxy-manager)
+  --repo    <owner/name>   HAM_REPO       GitHub repository        (invite-networks/haproxy-manager)
   --ref     <branch|tag>   HAM_REF        branch or tag            (main)
   --port    <port>         HAM_PORT       UI/API port              (8080)
   --listen  <address>      HAM_LISTEN     UI/API bind address      (0.0.0.0)

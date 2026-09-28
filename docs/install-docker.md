@@ -57,7 +57,7 @@ create an administrator on the first visit.
 The repository's `docker-compose.yml` is ready to use:
 
 ```bash
-curl -fsSLO https://raw.githubusercontent.com/avandeputte/haproxy-manager/main/docker-compose.yml
+curl -fsSLO https://raw.githubusercontent.com/invite-networks/haproxy-manager/main/docker-compose.yml
 docker compose up -d
 ```
 
@@ -185,7 +185,7 @@ For a production cluster the native install is the better fit:
 ## Building it yourself
 
 ```bash
-git clone https://github.com/avandeputte/haproxy-manager
+git clone https://github.com/invite-networks/haproxy-manager
 cd haproxy-manager
 docker build -t haproxy-manager .
 ```

@@ -812,7 +812,7 @@ Read by the app at startup. Set them in the unit
 | `HAM_CLUSTER_MAX_AGE` | `60` | age at which a stale snapshot is collected inline |
 | `HAM_WATCHDOG_PROBE_TIMEOUT` | `5` | how long a service may take to answer its probe |
 | `HAM_WATCHDOG_SELF_TIMEOUT` | `10` | how long the app's self-check may take |
-| `HAM_REPO` / `HAM_REF` | `avandeputte/haproxy-manager` / `main` | where updates come from |
+| `HAM_REPO` / `HAM_REF` | `invite-networks/haproxy-manager` / `main` | where updates come from |
 | `HAM_VERSION_URL` / `HAM_INSTALL_URL` | GitHub | override for a fork or mirror |
 | `HAM_DRY_RUN` | — | `1` renders and validates but never reloads services |
 
