@@ -229,7 +229,9 @@ def api_wizard_certificate():
             account = pick("accounts", body.get("account"),
                            {"name": "", "email": "", "ca": "letsencrypt", "eab_kid": "", "eab_hmac": ""})
             challenge = pick("challenges", body.get("challenge"),
-                             {"name": "", "method": "http01", "dns_provider": "", "dns_credentials": ""})
+                             {"name": "", "method": "http01", "dns_provider": "", "dns_credentials": "",
+                              "dns_alias_zone": ""})
+            validate.check_challenge(challenge)
         except ValueError as e:
             return jsonify({"ok": False, "error": str(e)}), 400
 

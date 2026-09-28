@@ -577,6 +577,45 @@ That list is parsed from acme.sh itself rather than hard-coded, so it stays
 correct as acme.sh adds providers. The field still accepts anything typed, so an
 unknown or newer hook name is passed through unchanged.
 
+### DNS alias validation
+
+A DNS-01 challenge type can have a **DNS alias zone**, such as `validation.net`.
+Every domain on a certificate using it is then validated at
+`<domain>.validation.net` instead of in its own zone (acme.sh's
+`--domain-alias`), and the credentials are for `validation.net` only. Each
+domain's owner publishes one CNAME, once:
+
+```
+_acme-challenge.domain.com  CNAME  domain.com.validation.net
+```
+
+It is all domains or none: acme.sh pairs aliases with domains by position. A
+wildcard shares its base name's alias, so `*.domain.com` needs no CNAME of its
+own. The **CNAMEs** button on a certificate lists the records its domains need
+and whether each is in place.
+
+**Before issuing**, each `_acme-challenge` CNAME is looked up. A missing or wrong
+one stops the issuance at once, and the log names the record and what it must
+point to, rather than acme.sh waiting out DNS and failing with a timeout.
+
+**A CNAME already at the alias name** (say `domain.com.validation.net` points
+somewhere else) cannot share its name with the TXT record the challenge needs.
+With Route 53 (`dns_aws`) the whole issuance is wrapped:
+
+1. The records at that name are saved to
+   `/var/lib/haproxy-manager/dns-alias-pending.json`.
+2. The CNAME is removed, and the manager waits out its TTL so the CA's resolvers
+   cannot follow a cached copy somewhere else. Keep that TTL short.
+3. acme.sh validates as usual.
+4. Whether that worked or not, the name is put back exactly as it was, in one
+   Route 53 change that also clears anything the challenge left behind.
+
+The saved copy stays on disk until the name is back. A restore that fails is
+retried every ten minutes, and on start, so a crash in between cannot lose the
+CNAME; a notification says when a restore fails and when it recovers. Other DNS
+providers cannot move a CNAME, so with one of those a CNAME at the alias name
+stops the issuance with that reason.
+
 ## Statistics
 
 **Statistics** reads HAProxy's admin socket (`show stat`) and refreshes every
@@ -1072,7 +1111,7 @@ again. That makes the file safe to keep off the node.
   Until then only the calls that create it answer — everything else returns 401 —
   so a node waiting to be set up does not hand its configuration to whoever
   reaches it first.
-- **Every API endpoint requires a session or the API key.** Of 87 routes exactly
+- **Every API endpoint requires a session or the API key.** Of 88 routes exactly
   three answer without either: `/api/login`, `/api/whoami` (which
   unauthenticated returns nothing but whether an administrator exists), and
   `/api/setup`, which refuses once an administrator exists. This is verified by
@@ -1124,7 +1163,8 @@ certificates), **purge** (removing those too), or cancel; piped from `curl`
 with no terminal to ask on, it updates in place and says so.
 
 It installs `haproxy`, `keepalived`, `python3-flask`, `python3-requests`,
-`python3-waitress`, `openssl`, `socat` and `iproute2` from apt, a pinned
+`python3-waitress`, `python3-dnspython`, `python3-boto3`, `openssl`, `socat` and
+`iproute2` from apt, a pinned
 [`acme.sh`](https://github.com/acmesh-official/acme.sh) with no cron of its own
 (the manager drives renewals), enables `net.ipv4.ip_nonlocal_bind` so HAProxy
 can bind a VIP this node does not hold, creates the administrator and API key,

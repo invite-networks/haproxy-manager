@@ -10,7 +10,7 @@ import copy
 from .base import _lock, app
 from .config import VALID_COLLECTIONS, load_config, merged, save_config
 from .util import _by_id, _sec
-from .validate import check_pool, check_setting_types
+from .validate import check_challenge, check_pool, check_setting_types
 from . import apply, haproxy, oauth
 
 # --------------------------------------------------------------------------
@@ -114,6 +114,11 @@ def collection(sec, col):
                     oauth.validate_pool_oauth(cfg, item)
                 except ValueError as e:
                     return jsonify({"error": str(e)}), 400
+            if sec == "acme" and col == "challenges":
+                try:
+                    check_challenge(item)
+                except ValueError as e:
+                    return jsonify({"error": str(e)}), 400
             item["id"] = str(uuid.uuid4())
             cfg[sec][col].append(item)
             save_config(cfg)
@@ -144,6 +149,11 @@ def collection_item(sec, col, iid):
                     try:
                         check_pool(data)
                         oauth.validate_pool_oauth(cfg, data)
+                    except ValueError as e:
+                        return jsonify({"error": str(e)}), 400
+                if sec == "acme" and col == "challenges":
+                    try:
+                        check_challenge(data)
                     except ValueError as e:
                         return jsonify({"error": str(e)}), 400
                 data["id"] = iid

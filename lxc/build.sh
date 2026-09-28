@@ -30,6 +30,8 @@ PACKAGES=(
     curl traceroute mtr-tiny htop tcpdump iputils-ping iproute2 procps
     # haproxy-manager
     python3 python3-flask python3-requests python3-waitress
+    # DNS alias validation: the CNAME check, and Route 53 for moving a CNAME
+    python3-dnspython python3-boto3
     haproxy keepalived openssl socat iputils-arping tar
 )
 # shellcheck disable=SC2206 # a space-separated list, split on purpose

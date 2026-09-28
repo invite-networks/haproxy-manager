@@ -1,7 +1,7 @@
 import { $, HEALTH_LABEL, api, btn, closeDlg, esc, fieldRow, list, lists, nameOf, openDlg, readForm, showText } from "./core.js";
 import { t } from "./i18n.js";
 import { refreshStatus, route } from "./shell.js";
-import { certificateNotices, certExpiryCell, certLastCell, certStatusCell, dnsApiByHook, dnsApiOptions, dnsCredentialHelp, issueCert, loadAcmeHealth, loadCertStatus, loadDnsApis, openCertWizard, showCertLog } from "./pages/certificates.js";
+import { certificateNotices, certExpiryCell, certLastCell, certStatusCell, certUsesAlias, dnsApiByHook, dnsApiOptions, dnsCredentialHelp, issueCert, loadAcmeHealth, loadCertStatus, loadDnsApis, openCertWizard, showCertCnames, showCertLog } from "./pages/certificates.js";
 import { state } from "./state.js";
 
 /* ---- entity registry ---- */
@@ -184,7 +184,9 @@ export const E={
    {k:"dns_provider",l:"DNS API hook",t:"combo",o:()=>dnsApiOptions,
     h:"Pick the provider acme.sh should talk to. The list comes from the acme.sh installed on this node."},
    {k:"dns_credentials",l:"DNS API credentials",t:"textarea",
-    h:"One KEY=value per line. Choosing a hook above fills in the names it needs."}]},
+    h:"One KEY=value per line. Choosing a hook above fills in the names it needs."},
+   {k:"dns_alias_zone",l:"DNS alias zone",t:"text",
+    h:"Optional. Validate every domain at <domain>.<zone> instead of in its own zone, through a CNAME from _acme-challenge.<domain>. The credentials above are then for this zone. With Route 53, a CNAME already at that name is saved and put back afterwards."}]},
 
  "acme/certificates":{title:"Certificates",one:"Certificate",add:"Add certificate",
   intro:"Certificates are issued with acme.sh and written as combined PEMs to the HAProxy certificate directory. HAProxy is reloaded and the certificate is pushed to the other nodes automatically. "+
@@ -199,7 +201,8 @@ export const E={
   rowActions:[
    {label:"Issue",fn:r=>issueCert(r,false),title:"Request the certificate from the CA now"},
    {label:"Force",fn:r=>issueCert(r,true),cls:"dngr",title:"Reissue even if not due for renewal"},
-   {label:"Log",fn:r=>showCertLog(r),title:"acme.sh output of the last attempt"}],
+   {label:"Log",fn:r=>showCertLog(r),title:"acme.sh output of the last attempt"},
+   {label:"CNAMEs",fn:r=>showCertCnames(r),show:r=>certUsesAlias(r),title:"The CNAME each domain needs for DNS alias validation, and whether it is in place"}],
   fields:[
    {k:"name",l:"Name",t:"text",h:"Also used as the PEM file name"},
    {k:"domains",l:"Domain names",t:"textarea",h:"One per line; the first is the certificate's primary name"},
@@ -304,6 +307,7 @@ export async function renderEntity(key,into){
       });
       const act=document.createElement("td");act.style.textAlign="right";act.style.whiteSpace="nowrap";
       (state.readOnly?[]:(def.rowActions||[])).forEach(a=>{
+        if(a.show&&!a.show(row))return;
         const b=btn(t(a.label),"sm "+(a.cls||""),()=>a.fn(row));
         if(a.title)b.title=t(a.title);
         act.appendChild(b);act.appendChild(document.createTextNode(" "));

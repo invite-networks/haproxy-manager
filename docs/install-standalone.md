@@ -72,8 +72,8 @@ In order, so nothing is a surprise:
 1. **Checks it can proceed** — root, `apt-get`, systemd, a valid port.
 2. **Detects an existing install** and offers to update or remove it.
 3. **Installs packages**: `haproxy`, `keepalived`, `python3`, `python3-flask`,
-   `python3-requests`, `python3-waitress`, `openssl`, `curl`, `socat`,
-   `iproute2`, `tar`, `ca-certificates`.
+   `python3-requests`, `python3-waitress`, `python3-dnspython`, `python3-boto3`,
+   `openssl`, `curl`, `socat`, `iproute2`, `tar`, `ca-certificates`.
 4. **Downloads the application** from GitHub. If the archive host cannot be
    reached it retries, then retries over IPv4, then falls back to fetching the
    individual files from `raw.githubusercontent.com`.

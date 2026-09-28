@@ -69,6 +69,7 @@ export const CERT_WIZ=[
   h:"HTTP-01 needs port 80 reachable from the internet. DNS-01 works behind a firewall and is the only way to get a wildcard."},
  {k:"dns_provider",l:"DNS API hook",t:"combo",o:()=>dnsApiOptions,h:"The provider acme.sh should talk to"},
  {k:"dns_credentials",l:"DNS API credentials",t:"textarea",h:"One KEY=value per line"},
+ {k:"dns_alias_zone",l:"DNS alias zone",t:"text",h:"Optional. Validate every domain at <domain>.<zone> through a CNAME from _acme-challenge.<domain>"},
  {k:"key_type",l:"Key type",t:"select",o:["ec-256","ec-384","rsa-2048","rsa-4096"],d:"ec-256"},
  {k:"auto_renew",l:"Renew automatically",t:"bool",d:true},
  {k:"issue",l:"Request it now",t:"bool",d:true,h:"Runs acme.sh straight away; leave off to just create the objects"},
@@ -98,7 +99,7 @@ export async function openCertWizard(){
     const newCh=frm.querySelector("#f_challenge_id").value===NEWOPT;
     const method=frm.querySelector("#f_ch_method").value;
     ["ch_name","ch_method"].forEach(k=>setRow(k,newCh));
-    ["dns_provider","dns_credentials"].forEach(k=>setRow(k,newCh&&method==="dns01"));
+    ["dns_provider","dns_credentials","dns_alias_zone"].forEach(k=>setRow(k,newCh&&method==="dns01"));
   };
   ["f_account_id","f_challenge_id","f_ch_method"].forEach(id=>{
     const el=frm.querySelector("#"+id);if(el)el.addEventListener("change",sync);});
@@ -115,7 +116,8 @@ export async function openCertWizard(){
       : {id:d.account_id};
     body.challenge=d.challenge_id===NEWOPT
       ? {name:d.ch_name||(d.ch_method==="dns01"?("dns-"+(d.dns_provider||"01")):"http-01"),
-         method:d.ch_method,dns_provider:d.dns_provider,dns_credentials:d.dns_credentials}
+         method:d.ch_method,dns_provider:d.dns_provider,dns_credentials:d.dns_credentials,
+         dns_alias_zone:d.dns_alias_zone}
       : {id:d.challenge_id};
     return body;
   };
@@ -289,6 +291,23 @@ export async function issueCert(row,force){
   if(location.hash==="#/acme/certificates")route();
   refreshStatus();
 }
+/* DNS alias validation: whether a certificate's challenge type has an alias zone */
+export function certUsesAlias(row){
+  const ch=(lists["acme/challenges"]||[]).find(c=>c.id===row.challenge);
+  return !!(ch&&ch.method==="dns01"&&(ch.dns_alias_zone||"").trim());
+}
+export async function showCertCnames(row){
+  const title=t("DNS aliases: {name}",{name:row.name});
+  try{
+    const r=await api("acme/cnames/"+row.id);
+    if(!r.ok){showText(title,r.error);return;}
+    const lines=r.records.map(x=>x.name+"  CNAME  "+x.target+"\n    "+
+      (x.ok?t("in place"):x.error?t("could not be checked: {error}",{error:x.error})
+           :x.found?t("WRONG: points to {found}",{found:x.found}):t("MISSING")));
+    showText(title,t("Each domain's owner publishes these records once:")+"\n\n"+lines.join("\n\n"));
+  }catch(e){showText(title,e.message);}
+}
+
 export async function showCertLog(row){
   try{
     const r=await api("acme/log/"+row.id);

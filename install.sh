@@ -309,6 +309,7 @@ install_packages() {
     apt-get update -q
     apt-get install -y --no-install-recommends \
         python3 python3-flask python3-requests python3-waitress \
+        python3-dnspython python3-boto3 \
         haproxy keepalived \
         openssl ca-certificates curl socat iproute2 procps tar
 }

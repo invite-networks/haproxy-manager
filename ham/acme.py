@@ -22,7 +22,7 @@ import re
 _SAFE_ENV = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 _DANGEROUS_ENV = {"PATH", "IFS", "ENV", "BASH_ENV", "SHELLOPTS", "BASHOPTS",
                   "PS4", "PROMPT_COMMAND", "PYTHONPATH", "PERL5LIB"}
-from . import auth, notify, sync
+from . import auth, dnsalias, notify, sync
 
 # --------------------------------------------------------------------------
 
@@ -45,6 +45,54 @@ def acme_run(args, env_extra=None):
     # viewer reads back. Left at the default level: level 2 traces the DNS hook
     # calls, and those carry API credentials.
     return run([ACME_SH, "--home", str(ACME_HOME), "--log"] + args, env=env)
+
+
+def dns_env(ch):
+    """The DNS provider credentials of a challenge type, as environment."""
+    env = {}
+    for line in (ch.get("dns_credentials") or "").splitlines():
+        if "=" not in line:
+            continue
+        kk, vv = line.split("=", 1)
+        kk = kk.strip()
+        # acme.sh's DNS hooks read their credentials from named variables,
+        # so this whole line goes into the environment of a root process.
+        # Restrict the NAME: a provider variable is a plain identifier, and
+        # nothing here should be able to set PATH, IFS, or the dynamic
+        # loader's hijack variables in that process.
+        if not _SAFE_ENV.match(kk) or kk in _DANGEROUS_ENV \
+                or kk.startswith(("LD_", "DYLD_")):
+            log.warning("ignoring a DNS credential line: %r is not a valid "
+                        "provider variable name", kk)
+            continue
+        env[kk] = vv.strip()
+    return env
+
+
+# Whether the last restore failed, so the recovery is reported -- and only
+# then: a restore at the end of every aliased issuance is routine.
+_restore_failed = False
+
+
+def restore_dns_aliases(cfg, trace=None):
+    """Put back any alias name an earlier issuance cleared and did not restore."""
+    global _restore_failed
+    trace = [] if trace is None else trace
+    if not dnsalias.pending():
+        return []
+    failed = dnsalias.restore(dns_env, trace, _by_id(merged(cfg)["acme"]["challenges"]))
+    was_failed, _restore_failed = _restore_failed, bool(failed)
+    if failed:
+        notify.notify_transition(
+            "dns-alias-restore", "failed", "certificates",
+            "A DNS record could not be put back",
+            "After ACME validation these names could not be restored in Route 53:\n\n%s\n\n"
+            "The saved records are kept and restoring is tried again every 10 minutes.\n\n%s"
+            % ("\n".join(failed), "\n".join(trace)), "error", cfg)
+    elif was_failed:
+        notify.notify_transition("dns-alias-restore", "ok", "certificates",
+                                 "DNS records restored", "\n".join(trace), "info", cfg)
+    return failed
 
 
 def ensure_account(acc):
@@ -137,35 +185,29 @@ def _acme_issue(cfg, cert, force=False):
     if rc != 0:
         return {"ok": False, "error": "ACME account registration failed", "log": "\n".join(trace)}
 
+    zone = dnsalias.alias_zone(ch)
     args = ["--issue", "--server", CA_SERVERS.get(acc.get("ca", "letsencrypt"), "letsencrypt")]
-    for d in doms:
-        args += ["-d", d]
+    if zone:
+        args += dnsalias.acme_args(doms, zone)
+    else:
+        for d in doms:
+            args += ["-d", d]
     args += ["--keylength", KEYLEN.get(cert.get("key_type", "ec-256"), "ec-256")]
     env = {}
     if ch.get("method") == "dns01":
         args += ["--dns", ch.get("dns_provider", "")]
-        for line in (ch.get("dns_credentials") or "").splitlines():
-            if "=" not in line:
-                continue
-            kk, vv = line.split("=", 1)
-            kk = kk.strip()
-            # acme.sh's DNS hooks read their credentials from named variables,
-            # so this whole line goes into the environment of a root process.
-            # Restrict the NAME: a provider variable is a plain identifier, and
-            # nothing here should be able to set PATH, IFS, or the dynamic
-            # loader's hijack variables in that process.
-            if not _SAFE_ENV.match(kk) or kk in _DANGEROUS_ENV \
-                    or kk.startswith(("LD_", "DYLD_")):
-                log.warning("ignoring a DNS credential line: %r is not a valid "
-                            "provider variable name", kk)
-                continue
-            env[kk] = vv.strip()
+        env = dns_env(ch)
     else:
         args += ["--standalone", "--httpport", str(cfg["acme"]["settings"].get("challenge_port", 9080))]
     if force:
         args += ["--force"]
 
-    rc, out = acme_run(args, env)
+    if zone:
+        rc, out = _issue_aliased(cfg, ch, env, doms, zone, args, trace)
+        if rc is None:
+            return {"ok": False, "error": out, "log": "\n".join(x for x in trace if x)}
+    else:
+        rc, out = acme_run(args, env)
     trace.append(out)
     if rc not in (0, 2):  # 2 = cert not yet due for renewal, treat as success
         return {"ok": False, "error": "issuance failed -- see log", "log": "\n".join(trace)}
@@ -176,6 +218,53 @@ def _acme_issue(cfg, cert, force=False):
     if not dep["ok"]:
         res["error"] = dep.get("error")
     return res
+
+
+def _issue_aliased(cfg, ch, env, doms, zone, args, trace):
+    """acme.sh, wrapped so every alias name ends as it started.
+
+    Returns acme_run's (rc, output), or (None, why) when it never ran.
+    """
+    with dnsalias.lock:
+        # A name left cleared by an earlier run comes back before anything
+        # else touches it.
+        if restore_dns_aliases(cfg, trace):
+            return None, "an earlier DNS alias record could not be restored -- see log"
+        rows = dnsalias.check_cnames(doms, zone)
+        unchecked = [r for r in rows if r["error"]]
+        problems = dnsalias.cname_problems([r for r in rows if not r["error"]])
+        if problems:
+            trace.extend("dns alias: " + p for p in problems)
+            return None, "a DNS alias CNAME is missing or wrong -- see log"
+        for r in unchecked:
+            trace.append("dns alias: %s could not be checked (%s); trying anyway"
+                         % (r["name"], r["error"]))
+        try:
+            why = dnsalias.clear_names(ch, env, dnsalias.alias_names(doms, zone), trace)
+            if why:
+                trace.append("dns alias: " + why)
+                return None, "a DNS alias name is a CNAME that cannot be moved -- see log"
+            return acme_run(args, env)
+        except Exception as e:
+            log.exception("dns alias: preparing the alias names failed")
+            trace.append("dns alias: preparing the alias names failed: %s" % e)
+            return None, "preparing the DNS alias names failed -- see log"
+        finally:
+            restore_dns_aliases(cfg, trace)
+
+
+@app.get("/api/acme/cnames/<cid>")
+def api_acme_cnames(cid):
+    """The CNAMEs a certificate's domains need for alias validation, checked."""
+    cfg = merged(load_config())
+    cert = _by_id(cfg["acme"]["certificates"]).get(cid)
+    if not cert:
+        abort(404)
+    zone = dnsalias.alias_zone(_by_id(cfg["acme"]["challenges"]).get(cert.get("challenge")))
+    if not zone:
+        return jsonify({"ok": False, "error": "this certificate's challenge type has no DNS alias zone"})
+    return jsonify({"ok": True, "zone": zone,
+                    "records": dnsalias.check_cnames(parse_domains(cert), zone)})
 
 
 def deploy_cert(cfg, cert):
@@ -267,10 +356,19 @@ _last_renew = time.time()
 
 def _renew_loop():
     global _last_renew
+    # A node that stopped between clearing an alias name and restoring it
+    # puts the name back as soon as it is up, not ten minutes later.
+    try:
+        restore_dns_aliases(load_config())
+    except Exception:
+        log.exception("restoring saved DNS alias records at start failed")
     while True:
         time.sleep(600)
         try:
             cfg = load_config()
+            # Before the renewal settings are even read: a cleared alias name
+            # is a live DNS record missing, whatever renewal is set to.
+            restore_dns_aliases(cfg)
             st = cfg["acme"]["settings"]
             if not (st.get("enabled") and st.get("auto_renew")):
                 continue

@@ -51,6 +51,22 @@ def check_setting_types(sec, proposed):
 # --------------------------------------------------------------------------
 # Backend Pools
 
+ZONE_RE = re.compile(r"^(?=.{1,253}$)([a-z0-9_]([a-z0-9_-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$")
+
+
+def check_challenge(item):
+    """Refuse a challenge type whose DNS alias zone is not a domain name.
+
+    Raises ValueError. The zone ends up in every alias name acme.sh is given,
+    so a stray space or a URL here would fail every certificate using it.
+    """
+    zone = (item.get("dns_alias_zone") or "").strip().strip(".").lower()
+    if zone and not ZONE_RE.match(zone):
+        raise ValueError("the DNS alias zone must be a domain name such as validation.net")
+    if zone and item.get("method") != "dns01":
+        raise ValueError("a DNS alias zone only applies to DNS-01 validation")
+
+
 def check_pool(item):
     """Refuse a pool whose rate limit would not render, before it is stored.
 

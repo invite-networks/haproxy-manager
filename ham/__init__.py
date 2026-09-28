@@ -29,6 +29,7 @@ from . import (
     metrics,
     apply,
     acme,
+    dnsalias,
     notify,
     watchdog,
     sync,
