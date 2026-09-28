@@ -15,10 +15,7 @@ stack that needs managing. A backup is one file; moving to new hardware is
 copying it across.
 
 ```bash
-# from a package: .deb and .rpm on every release (Debian, Ubuntu, RHEL, Fedora)
-sudo apt-get install -y ./haproxy-manager_1.95.0_all.deb
-
-# or the install script, on any Debian-based server
+# the install script, on any Debian-based server
 curl -fsSL https://raw.githubusercontent.com/invite-networks/haproxy-manager/main/install.sh | sudo bash
 
 # or as a Proxmox LXC template (Debian 13, amd64), built from this repository
@@ -30,8 +27,7 @@ Then open `http://<node>:8080`.
 <img src="docs/img/overview.png" alt="The Overview page: three nodes, their roles and versions, and every published service with a day of traffic" width="900">
 
 <sub>Every screenshot here is the real application, driven by a browser against
-a three-node cluster holding made-up data — see
-[tools/screenshots](tools/screenshots/).</sub>
+a three-node cluster holding made-up data.</sub>
 
 **Detailed guides**
 
@@ -954,8 +950,7 @@ One-click update applies to the installer-managed (systemd) install, which
 includes containers made from the Proxmox template.
 
 **Betas.** A change worth trying before it is released goes out as a beta: the
-same code on the `beta` branch with a version like `1.95.0-beta.1`, its own
-packages and image, and a release marked *pre-release* on GitHub. No node
+same code on the `beta` branch with a version like `1.95.0-beta.1`. No node
 offers it until *Also offer beta versions* is ticked under **Settings →
 Updates**; from then on the daily check reads both branches and offers
 whichever is newer, and a node on a beta takes the release when it comes
