@@ -21,11 +21,8 @@ sudo apt-get install -y ./haproxy-manager_1.95.0_all.deb
 # or the install script, on any Debian-based server
 curl -fsSL https://raw.githubusercontent.com/invite-networks/haproxy-manager/main/install.sh | sudo bash
 
-# or in Docker (linux/amd64 and linux/arm64)
-docker run -d --network host --cap-add NET_ADMIN --cap-add NET_BROADCAST --cap-add NET_RAW \
-  -v ham-data:/var/lib/haproxy-manager -v ham-acme:/var/lib/acme.sh \
-  -v ham-haproxy:/etc/haproxy -v ham-keepalived:/etc/keepalived \
-  ghcr.io/avandeputte/haproxy-manager:latest
+# or as a Proxmox LXC template (Debian 13, amd64), built from this repository
+make build
 ```
 
 Then open `http://<node>:8080`.
@@ -41,7 +38,7 @@ a three-node cluster holding made-up data — see
 | | |
 | --- | --- |
 | [Installing on a server](docs/install-standalone.md) | requirements, what the installer does, options, updating, uninstalling, troubleshooting |
-| [Running in Docker](docs/install-docker.md) | images, compose, networking, volumes, capabilities, limitations |
+| [Running in Proxmox](docs/install-proxmox.md) | building the LXC template, creating containers, several IPs, first sign-in |
 | [Configuration](docs/configuration.md) | every setting, what is shared between nodes, environment variables, ports |
 | [Authentication](docs/authentication.md) | the UI login and 2FA, basic auth for services, single sign-on (OIDC), the trust model |
 
@@ -890,10 +887,6 @@ systemd[1]: haproxy-manager.service: Failed with result 'watchdog'.
 systemd[1]: haproxy-manager.service: Scheduled restart job, restart counter is at 1.
 ```
 
-In Docker there is no systemd: supervisord restarts the app if it *exits*, and
-the image's `HEALTHCHECK` reports whether the UI answers, but nothing restarts a
-hung container unless your orchestrator acts on that health status.
-
 ### Node health is collected here too
 
 The watchdog polls every node on a schedule and keeps the result, so the UI
@@ -931,10 +924,6 @@ The app writes its own log to `/var/lib/haproxy-manager/haproxy-manager.log`
 (mode 0600, rotated at 4 MB, three kept) and to standard output, so
 `journalctl -u haproxy-manager` shows the same lines.
 
-In the Docker image there is no journal, so a small collector binds `/dev/log`
-and tees it to both the container log and `/var/log/ham-syslog.log`, which is
-what the viewer reads.
-
 ## Updates
 
 The app carries a version (`VERSION`, starting at **1.0**) and asks GitHub for
@@ -961,8 +950,8 @@ everything in that service's cgroup. Progress is streamed into
 polling across the restart. Your configuration, certificates and login are kept,
 and **HAProxy keeps serving traffic** — only the management UI restarts.
 
-One-click update applies to the installer-managed (systemd) install. In a
-container the button explains that you should pull a new image instead.
+One-click update applies to the installer-managed (systemd) install, which
+includes containers made from the Proxmox template.
 
 **Betas.** A change worth trying before it is released goes out as a beta: the
 same code on the `beta` branch with a version like `1.95.0-beta.1`, its own
@@ -1153,33 +1142,16 @@ Apply overwrites `/etc/haproxy/haproxy.cfg`, keeping a `.bak`.
 happens in what order, where each file lives, updating, uninstalling and
 troubleshooting.
 
-## Docker
+## Proxmox
 
-Multi-architecture images (**linux/amd64** and **linux/arm64**) are published to
-the GitHub Container Registry:
+The repository also builds a Proxmox LXC template: Debian 13, amd64, with the
+manager installed by `install.sh` exactly as on a server, plus SSH and the
+usual network tools. `make build` writes the template and its SHA-256 to
+`dist/`; `make check` tests it. Containers made from it are ordinary systemd
+nodes, so the watchdog and one-click updates work as they do on a server.
 
-```bash
-docker pull ghcr.io/avandeputte/haproxy-manager:latest   # or :1.46 to pin
-docker compose up -d                                     # on every node
-```
-
-The image is all-in-one: the manager, HAProxy, Keepalived and `acme.sh` in one
-container. There is no systemd inside a container, so `supervisord` runs the
-processes and a small `systemctl` shim ([docker/systemctl](docker/systemctl))
-translates the calls the app makes. HAProxy runs in master-worker mode and is
-reloaded with `SIGUSR2`, so Apply does not drop established connections.
-
-Host networking is the intended mode — Keepalived's VRRP and the virtual IP need
-a real interface — and Keepalived needs `NET_ADMIN`, `NET_BROADCAST` and
-`NET_RAW`. One container per node.
-
-One thing a container cannot do: **restart a hung manager**. On a systemd host
-`WatchdogSec` handles that; supervisord only restarts a process that exits. The
-image's `HEALTHCHECK` reports it, but something has to act on that. For a
-production cluster, the native install is the better fit.
-
-**→ [Full Docker guide](docs/install-docker.md)** — images and tags, compose,
-networking modes, volumes, environment, health, logs, upgrading and limitations.
+**→ [Proxmox guide](docs/install-proxmox.md)**: building, uploading, creating an
+unprivileged container, several IP addresses and the first sign-in.
 
 ## If the UI feels slow
 
@@ -1249,8 +1221,8 @@ Environment=HAM_THREADS=24
 `HAM_VERSION_URL` · `HAM_INSTALL_URL` · `HAM_DRY_RUN=1` (skip `systemctl` calls,
 for development).
 
-The app also has a small maintenance CLI, used by the installer and the Docker
-entrypoint so neither has to reimplement password hashing:
+The app also has a small maintenance CLI, used by the installer so it does not
+have to reimplement password hashing:
 
 ```bash
 python3 app.py show-admin                      # print the configured username

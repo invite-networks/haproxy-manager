@@ -269,9 +269,8 @@ you replace it with your own.
 Recipes are one JSON file each, read when the wizard asks for them — no
 restart. The shipped ones live in `static/recipes/` inside the application
 directory; put your own in `/var/lib/haproxy-manager/recipes/` (the data
-directory), which is where they survive an upgrade — in Docker the
-application directory is the image itself, replaced wholesale by the next
-pull, while the data directory is the volume. A local file with the same
+directory), which is where they survive an upgrade: an update replaces the
+application directory wholesale and leaves the data directory alone. A local file with the same
 name as a shipped one replaces it, so a shipped recipe can also be adjusted
 without touching the image. A file that is not valid JSON is skipped and the
 reason logged, so one bad recipe cannot empty the list. The filename is the
@@ -561,9 +560,7 @@ have masked or disabled, and never more than the budget above.
 
 **Watching the app itself.** A watchdog inside a process cannot restart that
 process, so systemd does: the unit sets `WatchdogSec=90`, and the app pings
-systemd only when a real request to its own listener succeeds. In Docker there
-is no systemd, so a hung manager is reported by the container health check but
-not repaired.
+systemd only when a real request to its own listener succeeds.
 
 **Probe the published URLs** (on by default) asks for every public name once
 a minute from the node holding the virtual IP, the way a browser would — DNS,

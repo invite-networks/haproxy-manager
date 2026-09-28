@@ -20,7 +20,7 @@ the virtual IP works because the node is on a real network.
 | Requirement | Notes |
 | --- | --- |
 | Debian-based distribution | Debian 12/13, Ubuntu 22.04/24.04. The installer refuses anything without `apt-get`. |
-| systemd | The installer refuses to run without it. For containers see [install-docker.md](install-docker.md). |
+| systemd | The installer refuses to run without it. For a container use the [Proxmox template](install-proxmox.md). |
 | root | `sudo`, or run as root. The service writes `/etc/haproxy` and reloads system services. |
 | Outbound HTTPS | To `github.com` for the download, and to your ACME provider for certificates. |
 | A spare port | 8080 by default for the UI. |
@@ -145,6 +145,8 @@ piping into `bash`:
 | `--tarball <url\|path>` | `HAM_TARBALL` | — |
 | — | `HAM_ACME_VERSION` | `3.1.4` — the acme.sh release to install |
 | — | `GITHUB_TOKEN` | for a private repository |
+| `--image` | `HAM_IMAGE` | build into a template: start nothing, seed no login ([Proxmox](install-proxmox.md)) |
+| `--first-boot` | — | seed the login and API key of a template node that has none |
 | `--update` / `--uninstall` / `--purge` | — | decide up front instead of being asked |
 | `-y`, `--yes` | — | do not ask for confirmation |
 

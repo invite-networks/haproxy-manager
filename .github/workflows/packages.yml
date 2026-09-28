@@ -28,7 +28,7 @@ jobs:
       - name: Vendor acme.sh
         run: |
           set -eu
-          ACME=$(grep -oP 'ACME_VERSION=\K[0-9.]+' Dockerfile | head -1)
+          ACME=$(grep -oP 'HAM_ACME_VERSION:-\K[0-9.]+' install.sh | head -1)
           curl -fsSL "https://github.com/acmesh-official/acme.sh/archive/refs/tags/${ACME}.tar.gz" -o /tmp/acme.tgz
           mkdir -p dist/acme.sh
           tar -xzf /tmp/acme.tgz -C dist/acme.sh --strip-components=1

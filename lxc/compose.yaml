@@ -1,0 +1,57 @@
+# The build environment for the Proxmox LXC template. Run through the Makefile
+# at the top of the repository rather than directly:
+#
+#   make build     dist/debian-13-haproxy-manager_<VERSION>_amd64.tar.zst + .sha256
+#   make check     boot the built template and prove it works
+#
+# The builder is always amd64. On an Apple Silicon Mac it runs under emulation:
+# slower, but the template it writes is the same file.
+name: ham-lxc
+
+services:
+  builder:
+    platform: linux/amd64
+    build:
+      context: .
+      dockerfile_inline: |
+        FROM debian:trixie-slim
+        RUN apt-get update \
+         && apt-get install -y --no-install-recommends \
+              mmdebstrap gpg zstd ca-certificates curl tar \
+         && rm -rf /var/lib/apt/lists/*
+        # Under emulation apt hands mmdebstrap a two-digit file descriptor, and
+        # dash cannot redirect one ("Bad fd number"). bash can. This is only
+        # the builder's shell; the template keeps Debian's default.
+        RUN ln -sf bash /usr/bin/sh
+    # mmdebstrap's root mode mounts /proc, /sys and /dev into the tree it
+    # builds, which needs the privileges a normal container does not have.
+    privileged: true
+    volumes:
+      - ..:/src:ro
+      - ../dist:/dist
+    environment:
+      EXTRA_PACKAGES: ${EXTRA_PACKAGES:-}
+      # The output belongs to whoever ran make, not to root.
+      HOST_UID: ${HOST_UID:-0}
+      HOST_GID: ${HOST_GID:-0}
+    command: ["bash", "/src/lxc/build.sh"]
+
+  # Boots the template's root filesystem with systemd as PID 1, the way
+  # Proxmox will, so first boot, the services and the UI are checked for real.
+  check:
+    platform: linux/amd64
+    build:
+      context: ../dist/check
+      dockerfile_inline: |
+        FROM scratch
+        ADD rootfs.tar /
+        STOPSIGNAL SIGRTMIN+3
+        CMD ["/sbin/init"]
+    # check.sh picks: /sbin/init on amd64, "sleep infinity" under emulation.
+    command: ${CHECK_CMD:-/sbin/init}
+    privileged: true
+    cgroup: private
+    tmpfs:
+      - /run
+      - /run/lock
+      - /tmp

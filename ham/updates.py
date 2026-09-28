@@ -160,7 +160,7 @@ def check_for_update():
 def update_supported():
     """One-click update only makes sense for the systemd install."""
     if not Path("/run/systemd/system").exists():
-        return False, "this node runs in a container -- pull a new image instead"
+        return False, "systemd is not running on this node, so the installer cannot update it"
     if not Path("/etc/systemd/system/haproxy-manager.service").exists():
         return False, "no haproxy-manager.service was found; this is not an installer-managed node"
     return True, ""

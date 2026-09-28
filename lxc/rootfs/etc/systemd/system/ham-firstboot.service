@@ -1,0 +1,12 @@
+[Unit]
+Description=HAProxy Cluster Manager: per-node SSH host keys and login
+Before=ssh.service haproxy-manager.service
+ConditionPathExists=/opt/haproxy-manager/install.sh
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/sbin/ham-firstboot
+
+[Install]
+WantedBy=multi-user.target

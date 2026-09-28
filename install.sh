@@ -23,6 +23,8 @@
 #   --skip-acme            HAM_SKIP_ACME=1   do not install acme.sh
 #   --tarball <url|path>   HAM_TARBALL   install from this tarball instead of GitHub
 #                          GITHUB_TOKEN  token used to fetch a private repository
+#   --image                HAM_IMAGE=1   build into a template: start nothing, seed no login
+#   --first-boot                         seed the login and API key of a template node
 #
 # Everything is wrapped in functions and only invoked from main() at the very
 # bottom, so a truncated download cannot half-execute.
@@ -40,6 +42,9 @@ PORT="${HAM_PORT:-8080}"
 LISTEN="${HAM_LISTEN:-0.0.0.0}"
 TARBALL="${HAM_TARBALL:-}"
 SKIP_ACME="${HAM_SKIP_ACME:-0}"
+# Building a template (the Proxmox LXC image): there is no running systemd to
+# talk to, and every container made from it must get its own login.
+IMAGE="${HAM_IMAGE:-0}"
 ACME_VERSION="${HAM_ACME_VERSION:-3.1.4}"
 UNIT=/etc/systemd/system/haproxy-manager.service
 
@@ -90,6 +95,10 @@ Options (or the equivalent environment variable):
   --skip-acme              HAM_SKIP_ACME  do not install acme.sh
   --tarball <url|path>     HAM_TARBALL    install from this tarball instead of GitHub
                            GITHUB_TOKEN   token for a private repository
+  --image                  HAM_IMAGE=1    install into a template being built: start
+                                          nothing and seed no login (see lxc/)
+  --first-boot                            seed the login and API key on a node made
+                                          from a template, if it has none yet
 
 When haproxy-manager is already installed you are asked what to do. To decide up
 front:
@@ -122,6 +131,8 @@ parse_args() {
             --admin-user) HAM_ADMIN_USER="${2:?--admin-user needs a value}"; shift 2 ;;
             --admin-password) HAM_ADMIN_PASSWORD="${2:?--admin-password needs a value}"; shift 2 ;;
             --skip-acme)  SKIP_ACME=1; shift ;;
+            --image)      IMAGE=1; shift ;;
+            --first-boot) MODE=first-boot; MODE_FROM_FLAG=1; shift ;;
             -h|--help)    usage; exit 0 ;;
             *)            die "unknown option: $1 (try --help)" ;;
         esac
@@ -135,7 +146,9 @@ parse_args() {
 preflight() {
     [ "$(id -u)" -eq 0 ] || die "this installer must run as root (use sudo)"
     command -v apt-get >/dev/null || die "no apt-get found -- this installer supports Debian-based distributions only"
-    [ -d /run/systemd/system ] || die "systemd is not running -- for containers use the Docker image instead (see README)"
+    # A template is built in a chroot, where systemd is installed but not running.
+    [ -d /run/systemd/system ] || [ "$IMAGE" = "1" ] \
+        || die "systemd is not running -- for a container use the Proxmox LXC template (see lxc/)"
     command -v curl >/dev/null || {
         log "Installing curl"
         DEBIAN_FRONTEND=noninteractive apt-get update -q
@@ -497,7 +510,10 @@ configure_system() {
 net.ipv4.ip_nonlocal_bind = 1
 net.ipv6.ip_nonlocal_bind = 1
 EOF
-    sysctl -q --system >/dev/null 2>&1 || warn "sysctl --system failed -- non-local bind may be inactive until reboot"
+    # In a template there is no kernel of its own to set yet; it applies on boot.
+    if [ "$IMAGE" != "1" ]; then
+        sysctl -q --system >/dev/null 2>&1 || warn "sysctl --system failed -- non-local bind may be inactive until reboot"
+    fi
 
     # keepalived.service carries ConditionFileNotEmpty=/etc/keepalived/keepalived.conf,
     # so enabling it now is harmless: it stays inert until the manager writes a
@@ -594,6 +610,11 @@ WatchdogSec=90
 WantedBy=multi-user.target
 EOF
     chmod 0644 "$UNIT"
+    if [ "$IMAGE" = "1" ]; then
+        # Enabling only writes symlinks, which works without a running systemd.
+        systemctl enable haproxy-manager >/dev/null
+        return 0
+    fi
     systemctl daemon-reload
     systemctl enable haproxy-manager >/dev/null
     systemctl restart haproxy-manager
@@ -658,6 +679,16 @@ EOF
 
 main() {
     parse_args "$@"
+    if [ "$MODE" = "first-boot" ]; then
+        # Run by ham-firstboot.service before the manager starts, on every
+        # boot of a node made from the template. Once a login exists it
+        # changes nothing.
+        [ -f "$DEST/app.py" ] || die "haproxy-manager is not installed in $DEST"
+        install -d -m 0700 "$DATA"
+        seed_credentials
+        [ -n "${ADMIN_PW:-}" ] && log "Seeded the administrator login -- see $DATA/admin-credentials.txt"
+        exit 0
+    fi
     preflight
     detect_install
     choose_mode
@@ -668,6 +699,11 @@ main() {
     install_acme
     install_app
     configure_system
+    if [ "$IMAGE" = "1" ]; then
+        install_service
+        log "Installed into the image; each node seeds its own login on first boot"
+        exit 0
+    fi
     seed_credentials
     install_service
     wait_for_ui || true

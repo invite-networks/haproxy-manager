@@ -201,8 +201,7 @@ absent claim is trusted — some providers simply never send one.
   issuer URL is wrong, or its certificate does not verify. A provider behind
   a private CA needs `REQUESTS_CA_BUNDLE` pointing at the CA file in this
   app's environment: `Environment=REQUESTS_CA_BUNDLE=/etc/ssl/private-ca.pem`
-  in a systemd drop-in, or `-e REQUESTS_CA_BUNDLE=...` with a volume for
-  Docker.
+  in a systemd drop-in.
 - **The provider complains about the redirect URI** — what is registered
   there must match `https://<sign-in host>/.ham-sso/callback` exactly.
 - **Signing in loops or never sticks** — the cookie domain is wrong: a bare

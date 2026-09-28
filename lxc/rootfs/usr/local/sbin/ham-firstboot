@@ -1,0 +1,12 @@
+#!/bin/sh
+# Gives a container made from the template what must be its own, before SSH
+# and the manager start. Runs on every boot and changes nothing once done.
+set -eu
+
+# Proxmox writes SSH host keys when it creates the container. Anything else
+# that unpacks the template does not, and sshd will not start without them.
+ssh-keygen -A
+
+# The administrator login and API key: random, per node, only when missing.
+# install.sh does the seeding, so a template node and a server match.
+exec /opt/haproxy-manager/install.sh --first-boot

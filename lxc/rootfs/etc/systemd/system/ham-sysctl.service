@@ -1,0 +1,21 @@
+# In an LXC container /proc/sys is read-only apart from net/, so
+# systemd-sysctl.service skips itself entirely (ConditionPathIsReadWrite) and
+# /etc/sysctl.d is never applied. The container's own network settings are
+# still writable, so apply the one HAProxy needs directly: binding a virtual
+# IP that this node does not hold yet.
+[Unit]
+Description=HAProxy Cluster Manager: allow binding addresses not yet held
+DefaultDependencies=no
+After=local-fs.target
+Before=network-pre.target haproxy.service keepalived.service haproxy-manager.service
+Wants=network-pre.target
+ConditionPathExists=/etc/sysctl.d/60-haproxy-manager.conf
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+# -e: a container with IPv6 disabled has no net.ipv6 keys to set.
+ExecStart=/usr/sbin/sysctl -q -e -p /etc/sysctl.d/60-haproxy-manager.conf
+
+[Install]
+WantedBy=multi-user.target
